@@ -5,7 +5,7 @@ import numpy
 
 comm = MPI.COMM_WORLD
 
-
+'''
 class Graph(): 
    
     def __init__(self, vertices): 
@@ -44,31 +44,36 @@ class Graph():
                     dist[v] = dist[u] + self.graph[u][v] 
    
         self.printSolution(dist) 
-   
-# Driver program 
+'''
 
-G = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
-# G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
 
-A = nx.adjacency_matrix(G)
+def get_closeness_centrality(graph, source):
+    p = nx.shortest_path(graph, source)
+    shortest_path_list = []
+    for node in p.keys():
+        shortest_path_list.append(len(p[node]) - 1)
+    clo_cen_val = len(shortest_path_list) / sum(shortest_path_list)
+    return clo_cen_val
 
-p = nx.shortest_path(G, source=214328887)
-# p = nx.shortest_path(G, source=1)
 
-shortest_path_list = []
-for node in p.keys():
-    shortest_path_list.append(len(p[node]) - 1)
+def all_closeness_centrality(graph):
+    cc = {}     # {source: value}
+    for node in list(graph):
+        cc.update({node: get_closeness_centrality(graph, node)})
+    return cc
 
-print(shortest_path_list)
 
-sum_of_shortest_paths = sum(shortest_path_list)
+# Driver program
+# G = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
 
-clo_cen_val = float(len(shortest_path_list) / sum_of_shortest_paths)
+# A = nx.adjacency_matrix(G)
 
-print(clo_cen_val)
+# test, source = 1
+# twitter, source = 214328887
+print(all_closeness_centrality(G))
 
-# g = Graph(len(A.todense())) 
 
+# g = Graph(len(A.todense()))
 # g.graph = adj_list
-   
 # g.dijkstra(0)
