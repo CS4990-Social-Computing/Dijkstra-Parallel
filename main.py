@@ -1,6 +1,7 @@
 import sys 
 from mpi4py import MPI
 import networkx as nx
+import numpy
 
 comm = MPI.COMM_WORLD
 
@@ -46,12 +47,28 @@ class Graph():
    
 # Driver program 
 
-data = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+G = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+# G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
 
-A = nx.adjacency_matrix(data)
+A = nx.adjacency_matrix(G)
 
-g = Graph(len(A.todense())) 
+p = nx.shortest_path(G, source=214328887)
+# p = nx.shortest_path(G, source=1)
 
-g.graph = [ A ]
+shortest_path_list = []
+for node in p.keys():
+    shortest_path_list.append(len(p[node]) - 1)
+
+print(shortest_path_list)
+
+sum_of_shortest_paths = sum(shortest_path_list)
+
+clo_cen_val = float(len(shortest_path_list) / sum_of_shortest_paths)
+
+print(clo_cen_val)
+
+# g = Graph(len(A.todense())) 
+
+# g.graph = adj_list
    
-g.dijkstra(0)
+# g.dijkstra(0)
