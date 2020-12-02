@@ -56,14 +56,17 @@ def get_closeness_centrality(graph, source):
     sum_shortest_path = sum(shortest_path_list)
     if sum_shortest_path <= 0:
         return 0
-    clo_cen_val = len(shortest_path_list) / sum_shortest_path
+    clo_cen_val = (graph.number_of_nodes() - 1) / sum_shortest_path
     return clo_cen_val
 
 
 def all_closeness_centrality(graph):
     cc = {}  # {source: value}
+    # i = 1
     for node in list(graph):
+        # print(i, "node(s) checked")
         cc.update({node: get_closeness_centrality(graph, node)})
+        # i += 1
     return cc
 
 
@@ -78,14 +81,16 @@ def get_top_5_values(graph):
 
 
 ''' Driver program '''
-
+i = 1
+# print("creating graph...")
 # G = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
-G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
+# G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
+G = nx.read_edgelist("test.txt", create_using=nx.DiGraph(), nodetype=int)
 
 # A = nx.adjacency_matrix(G)
 # print(A.todense())
 
-print(all_closeness_centrality(G))
+# print(all_closeness_centrality(G))
 print(get_top_5_values(G))
 
 # g = Graph(len(A.todense()))
