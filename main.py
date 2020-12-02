@@ -2,6 +2,7 @@ import sys
 from mpi4py import MPI
 import networkx as nx
 import numpy
+from collections import Counter
 
 comm = MPI.COMM_WORLD
 
@@ -52,27 +53,40 @@ def get_closeness_centrality(graph, source):
     shortest_path_list = []
     for node in p.keys():
         shortest_path_list.append(len(p[node]) - 1)
-    clo_cen_val = len(shortest_path_list) / sum(shortest_path_list)
+    sum_shortest_path = sum(shortest_path_list)
+    if sum_shortest_path <= 0:
+        return 0
+    clo_cen_val = len(shortest_path_list) / sum_shortest_path
     return clo_cen_val
 
 
 def all_closeness_centrality(graph):
-    cc = {}     # {source: value}
+    cc = {}  # {source: value}
     for node in list(graph):
         cc.update({node: get_closeness_centrality(graph, node)})
     return cc
 
 
-# Driver program
+def get_top_5_values(graph):
+    cc = all_closeness_centrality(graph)
+    k = Counter(cc)
+    highest = k.most_common(5)
+    top = {}
+    for i in highest:
+        top.update({i[0]: i[1]})
+    return top
+
+
+''' Driver program '''
+
 # G = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
 G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
 
 # A = nx.adjacency_matrix(G)
+# print(A.todense())
 
-# test, source = 1
-# twitter, source = 214328887
 print(all_closeness_centrality(G))
-
+print(get_top_5_values(G))
 
 # g = Graph(len(A.todense()))
 # g.graph = adj_list
