@@ -62,15 +62,15 @@ def get_closeness_centrality(graph, source):
 
 def all_closeness_centrality(graph):
     cc = {}  # {source: value}
-    # i = 1
+    i = 1
     for node in list(graph):
         # print(i, "node(s) checked")
         cc.update({node: get_closeness_centrality(graph, node)})
-        # i += 1
+        i += 1
     return cc
 
 
-def get_top_5_values(graph):
+def get_top_5_manual(graph):
     cc = all_closeness_centrality(graph)
     k = Counter(cc)
     highest = k.most_common(5)
@@ -80,19 +80,31 @@ def get_top_5_values(graph):
     return top
 
 
-''' Driver program '''
-i = 1
-# print("creating graph...")
-# G = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
-# G = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
-G = nx.read_edgelist("test.txt", create_using=nx.DiGraph(), nodetype=int)
+def get_top_5_networkx(graph):
+    cc = Counter(nx.closeness_centrality(graph))
+    highest = cc.most_common(5)
+    top = {}
+    for i in highest:
+        top.update({i[0]: i[1]})
+    return top
 
-# A = nx.adjacency_matrix(G)
-# print(A.todense())
 
-# print(all_closeness_centrality(G))
-print(get_top_5_values(G))
+''' Facebook '''
+fb = nx.read_edgelist("facebook_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+print("facebook_combined")
+print(get_top_5_networkx(fb))
 
-# g = Graph(len(A.todense()))
-# g.graph = adj_list
-# g.dijkstra(0)
+''' Twitter '''
+# t = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+# print("twitter_combined")
+# print(get_top_5_networkx(t))
+
+# test_data_set = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
+# print("test_data_set")
+# print(get_top_5_manual(test_data_set))
+# print(get_top_5_networkx(test_data_set))
+
+# test = nx.read_edgelist("test.txt", create_using=nx.DiGraph(), nodetype=int)
+# print("test")
+# print(get_top_5_manual(test))
+# print(get_top_5_networkx(test))
