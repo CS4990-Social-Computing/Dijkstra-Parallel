@@ -1,83 +1,6 @@
-import sys 
 from mpi4py import MPI
 import networkx as nx
-import numpy
 from collections import Counter
-
-comm = MPI.COMM_WORLD
-
-'''
-class Graph(): 
-   
-    def __init__(self, vertices): 
-        self.V = vertices 
-        self.graph = [[0 for column in range(vertices)]  
-                    for row in range(vertices)] 
-   
-    def printSolution(self, dist): 
-        print ("Vertex tDistance from Source") 
-        for node in range(self.V): 
-            print (node, "t", dist[node]) 
-   
-    def minDistance(self, dist, sptSet): 
-        min = sys.maxsize 
-
-        for v in range(self.V): 
-            if dist[v] < min and sptSet[v] == False: 
-                min = dist[v] 
-                min_index = v 
-   
-        return min_index 
-
-
-    def dijkstra(self, src): 
-   
-        dist = [sys.maxsize] * self.V 
-        dist[src] = 0
-        sptSet = [False] * self.V 
-   
-        for cout in range(self.V): 
-            u = self.minDistance(dist, sptSet) 
-            sptSet[u] = True
-    
-            for v in range(self.V): 
-                if self.graph[u][v] > 0 and sptSet[v] == False and dist[v] > dist[u] + self.graph[u][v]: 
-                    dist[v] = dist[u] + self.graph[u][v] 
-   
-        self.printSolution(dist) 
-'''
-
-
-def get_closeness_centrality(graph, source):
-    p = nx.shortest_path(graph, source)
-    shortest_path_list = []
-    for node in p.keys():
-        shortest_path_list.append(len(p[node]) - 1)
-    sum_shortest_path = sum(shortest_path_list)
-    if sum_shortest_path <= 0:
-        return 0
-    clo_cen_val = (graph.number_of_nodes() - 1) / sum_shortest_path
-    return clo_cen_val
-
-
-def all_closeness_centrality(graph):
-    cc = {}  # {source: value}
-    i = 1
-    for node in list(graph):
-        # print(i, "node(s) checked")
-        cc.update({node: get_closeness_centrality(graph, node)})
-        i += 1
-    return cc
-
-
-def get_top_5_manual(graph):
-    cc = all_closeness_centrality(graph)
-    k = Counter(cc)
-    highest = k.most_common(5)
-    top = {}
-    for i in highest:
-        top.update({i[0]: i[1]})
-    return top
 
 
 def get_top_5_networkx(graph):
@@ -89,22 +12,59 @@ def get_top_5_networkx(graph):
     return top
 
 
-''' Facebook '''
-fb = nx.read_edgelist("facebook_combined.txt", create_using=nx.DiGraph(), nodetype=int)
-print("facebook_combined")
-print(get_top_5_networkx(fb))
+def scatter(graph, nodes_list):
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
 
-''' Twitter '''
-# t = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
-# print("twitter_combined")
-# print(get_top_5_networkx(t))
+    cc_values = {}
+    for i in range(rank, len(nodes), size):
+        # print("rank", rank, "processing node", nodes_list[i])
+        cc_values.update(get_closeness_centrality(graph, nodes_list[i]))
+    if rank != 0:
+        comm.send(cc_values, dest=0)
+    if rank == 0:
+        for i in range(1, size):
+            cc_values.update(comm.recv(source=i))
+        print("  Result:", get_top_5_values(cc_values))
+        print("Expected:", get_top_5_networkx(graph))
 
-# test_data_set = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
-# print("test_data_set")
-# print(get_top_5_manual(test_data_set))
-# print(get_top_5_networkx(test_data_set))
 
-# test = nx.read_edgelist("test.txt", create_using=nx.DiGraph(), nodetype=int)
-# print("test")
-# print(get_top_5_manual(test))
-# print(get_top_5_networkx(test))
+def get_closeness_centrality(graph, source):
+    return {source: nx.closeness_centrality(graph, source)}
+
+
+def get_top_5_values(closeness_centrality):
+    cc_counter = Counter(closeness_centrality)
+    highest = cc_counter.most_common(5)
+    top_5 = {}
+    for i in highest:
+        top_5.update({i[0]: i[1]})
+    return top_5
+
+
+if __name__ == "__main__":
+    ''' test '''
+    # test = nx.read_edgelist("test.txt", create_using=nx.DiGraph(), nodetype=int)
+    # nodes = list(test.nodes)
+    # scatter(test, nodes)
+
+    ''' test_data_set '''
+    # test_data_set = nx.read_edgelist("test_data_set.txt", create_using=nx.DiGraph(), nodetype=int)
+    # nodes = list(test_data_set.nodes)
+    # scatter(test_data_set, nodes)
+
+    ''' Facebook '''
+    fb = nx.read_edgelist("facebook_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+    nodes = list(fb.nodes)
+    scatter(fb, nodes)
+
+    ''' Twitter '''
+    # t = nx.read_edgelist("twitter_combined.txt", create_using=nx.DiGraph(), nodetype=int)
+    # nodes = list(t.nodes)
+    # scatter(t, nodes)
+
+    ''' Wiki '''
+    # w = nx.read_edgelist("Wiki-Vote.txt", create_using=nx.DiGraph(), nodetype=int)
+    # nodes = list(w.nodes)
+    # scatter(w, nodes)
