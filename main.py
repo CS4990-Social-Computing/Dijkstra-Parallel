@@ -26,8 +26,7 @@ def scatter(graph, nodes_list):
     if rank == 0:
         for i in range(1, size):
             cc_values.update(comm.recv(source=i))
-        print("  Result:", get_top_5_values(cc_values))
-        print("Expected:", get_top_5_networkx(graph))
+        print_to_file(cc_values)
 
 
 def get_closeness_centrality(graph, source):
@@ -41,6 +40,19 @@ def get_top_5_values(closeness_centrality):
     for i in highest:
         top_5.update({i[0]: i[1]})
     return top_5
+
+
+def print_to_file(cc_values):
+    output = open("output.txt", "w")
+    output.write("Closeness centrality values\n")
+    output.write("--------------------------------------\n")
+    for n in cc_values.keys():
+        output.write(str(n) + ": " + str(cc_values[n]) + "\n")
+    output.write("\nTop 5 closeness centrality values\n")
+    output.write("--------------------------------------\n")
+    for n in get_top_5_values(cc_values).keys():
+        output.write(str(n) + ": " + str(cc_values[n]) + "\n")
+    output.close()
 
 
 if __name__ == "__main__":
